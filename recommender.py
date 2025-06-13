@@ -27,18 +27,16 @@ def analyze_stock(ticker):
     reasons = []
     score = 0
 
-    if 'RSI' in latest and not pd.isna(latest['RSI']):
-        if latest['RSI'] < 30:
-            reasons.append("RSI is below 30 (oversold)")
-            score += 1
-    if all(x in latest and not pd.isna(latest[x]) for x in ['MACD', 'Signal']):
-        if latest['MACD'] > latest['Signal']:
-            reasons.append("MACD is above signal line (bullish)")
-            score += 1
-    if all(x in latest and not pd.isna(latest[x]) for x in ['MA20', 'MA50']):
-        if latest['MA20'] > latest['MA50']:
-            reasons.append("MA20 is above MA50 (bullish crossover)")
-            score += 1
+    rsi_value = latest['RSI'].iloc[-1] if 'RSI' in latest and not latest['RSI'].isna().all() else None
+    if rsi_value is not None and rsi_value < 30:
+    reasons.append("RSI is below 30 (oversold)")
+    score += 1
+    def safe_get_indicator(latest, col):
+        return latest[col].iloc[-1] if col in latest and not latest[col].isna().all() else None
+    rsi = safe_get_indicator(latest, 'RSI')
+    if rsi is not None and rsi < 30:
+        reasons.append("RSI is below 30 (oversold)")
+        score += 1
     return {
         'ticker': ticker,
         'score': score,
