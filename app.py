@@ -3,6 +3,7 @@ import pandas as pd
 from stock_data import fetch_stock_data
 from analyzer import analyze_stock
 from gpt_helper import explain_recommendation
+from news_sentiment import fetch_news, summarize_sentiment
 import plotly.graph_objs as go
 
 st.set_page_config(page_title="Stock Sage Pro - AI Stock Recommender", layout="centered")
@@ -56,6 +57,16 @@ if st.button("Analyze Stocks"):
 
                     fig.update_layout(xaxis_rangeslider_visible=False, height=500, template="plotly_dark")
                     st.plotly_chart(fig, use_container_width=True)
+
+                    # News sentiment
+                    st.markdown("### 📰 News Sentiment")
+                    articles = fetch_news(ticker)
+                    sentiment, summaries = summarize_sentiment(articles)
+                    st.markdown(f"**Sentiment:** {sentiment}")
+                    st.markdown("**Headlines:**")
+                    for title, score in summaries:
+                        emoji = "✅" if score > 0.2 else ("⚠️" if score > -0.2 else "❌")
+                        st.markdown(f"{emoji} {title} ({round(score, 2)})")
 
                 except Exception as e:
                     st.error(f"Error analyzing {ticker}: {e}")
