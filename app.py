@@ -3,8 +3,7 @@ import pandas as pd
 from stock_data import fetch_stock_data
 from analyzer import analyze_stock
 from gpt_helper import explain_recommendation
-from news_sentiment import fetch_news, summarize_sentiment
-import plotly.graph_objs as go
+from telegram_alert import send_telegram_alert  # NEW
 
 st.set_page_config(page_title="Stock Sage Pro - AI Stock Recommender", layout="centered")
 st.title("📈 Stock Sage Pro - AI Stock Recommender")
@@ -38,35 +37,10 @@ if st.button("Analyze Stocks"):
                     st.markdown("**AI Explanation:**")
                     st.success(explanation)
 
-                    # Candlestick chart
-                    st.markdown("### 📉 Price Chart")
-                    fig = go.Figure()
-                    fig.add_trace(go.Candlestick(
-                        x=df.index,
-                        open=df['Open'],
-                        high=df['High'],
-                        low=df['Low'],
-                        close=df['Close'],
-                        name='Price'))
-
-                    fig.add_trace(go.Scatter(
-                        x=df.index,
-                        y=df['Close'].rolling(20).mean(),
-                        line=dict(color='orange', width=2),
-                        name='20-day MA'))
-
-                    fig.update_layout(xaxis_rangeslider_visible=False, height=500, template="plotly_dark")
-                    st.plotly_chart(fig, use_container_width=True)
-
-                    # News sentiment
-                    st.markdown("### 📰 News Sentiment")
-                    articles = fetch_news(ticker)
-                    sentiment, summaries = summarize_sentiment(articles)
-                    st.markdown(f"**Sentiment:** {sentiment}")
-                    st.markdown("**Headlines:**")
-                    for title, score in summaries:
-                        emoji = "✅" if score > 0.2 else ("⚠️" if score > -0.2 else "❌")
-                        st.markdown(f"{emoji} {title} ({round(score, 2)})")
+                    # Send Telegram alert if score >= 3
+                    if result['score'] >= 3:
+                        message = f"📈 *Stock Sage Alert*\n\n💼 *{ticker}*\n✅ Recommendation: *{result['recommendation']}*\n📊 Score: *{result['score']}/5*\n💡 Summary: {', '.join(result['reasons'])}"
+                        send_telegram_alert(message)
 
                 except Exception as e:
                     st.error(f"Error analyzing {ticker}: {e}")
